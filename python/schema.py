@@ -1,18 +1,12 @@
 import requests
 import base64
-import config
+import settings.config as config
 import json
+import settings.webapi_paths as webapi_paths
 
-url=f'https://dev.azure.com/{config.organization}/{config.project}/_apis/wit/fields?api-version=7.0'
-authorization = str(base64.b64encode(bytes(':'+ config.personal_access_token, 'ascii')), 'ascii')
-headers = {
-    'Accept': 'application/json',
-    'Authorization': 'Basic '+authorization
-}
 
 output_fields = ['isLocked', 'name', 'referenceName', 'description', 'type', 'usage', 'readOnly', 'canSortBy', 'isQueryable', 'isIdentity', 'isPicklist', 'isPicklistSuggested', 'url', 'supportedOperations']
-
-response = requests.get(url=url, headers=headers)
+response = requests.get(url=webapi_paths.work_items_schema_url, headers=config.headers)
 
 items=json.loads(response.text)
 

@@ -1,15 +1,11 @@
 import requests
 import base64
-import config
 import json
+import settings.config as config
+import settings.webapi_paths as webapi_paths
 
 # Pull Requestの一覧を取得する
-authorization = str(base64.b64encode(bytes(':'+ config.personal_access_token, 'ascii')), 'ascii')
-headers = {
-    'Accept': 'application/json',
-    'Authorization': 'Basic '+authorization
-}
-response = requests.get(url=config.pull_requests_url, headers=headers)
+response = requests.get(url=webapi_paths.pull_requests_url, headers=config.headers)
 items=json.loads(response.text)
 
 for item in items['value']:
@@ -22,8 +18,8 @@ for item in items['value']:
         print(reviewer['displayName'])
 
     # Pull Requestの詳細を取得する
-    pull_request_detail_url=config.pull_request_detail_url % pullRequestId
-    pullRequest_response = requests.get(url=pull_request_detail_url, headers=headers)
+    pull_request_detail_url=webapi_paths.pull_request_detail_url % pullRequestId
+    pullRequest_response = requests.get(url=pull_request_detail_url, headers=config.headers)
 
     # Work Itemの詳細を取得する
     pullRequestResult = json.loads(pullRequest_response.text)
@@ -31,13 +27,13 @@ for item in items['value']:
     print('\t----- WOrk Items -----')
     if 'workItemRefs' in pullRequestResult:
         for workItem in pullRequestResult['workItemRefs']:
-            workItem_Response = requests.get(url=workItem['url'], headers=headers)
+            workItem_Response = requests.get(url=workItem['url'], headers=config.headers)
             workItemResult = json.loads(workItem_Response.text)
             
             print('\t' + str(workItem['id']) + '\t' + workItemResult['fields']['System.WorkItemType']  + '\t' + workItemResult['fields']['System.Title'])
     # Pull Requestのスレッドを取得する
-    pull_request_threads_url=config.pull_request_threads_url % pullRequestId
-    pullRequestThreads_response = requests.get(url=pull_request_threads_url, headers=headers)
+    pull_request_threads_url=webapi_paths.pull_request_threads_url % pullRequestId
+    pullRequestThreads_response = requests.get(url=pull_request_threads_url, headers=config.headers)
     pullRequestThreadsResult = json.loads(pullRequestThreads_response.text)
     print('\t----- Threads -----')
     for thread in pullRequestThreadsResult['value']:
