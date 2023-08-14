@@ -50,12 +50,11 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     // save_resultsを逐次実行する
     for save_result in save_results {
-        println!("{}", save_result.len());
         let results: Vec<_> = futures::future::join_all(save_result).await;
         // 結果のチェック
         for result in results {
             match result {
-                Ok(_) => println!("Task succeeded"),
+                Ok(_) => {},
                 Err(err) => eprintln!("Task failed: {}", err),
             }
         }

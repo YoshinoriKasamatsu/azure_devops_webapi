@@ -108,17 +108,37 @@ pub async fn get_work_items_details(organization: &str, project: &str, pat: &str
         ids_vec.push(chunk.to_vec());
     }
 
-    let mut all_work_items: Vec<WorkItem> = Vec::new();
+    // 取得処理作成
+    let mut tasks = Vec::new();
     for ids in ids_vec {
-        let ids_str: String = ids.iter().map(|ids: &i64| ids.to_string()).collect::<Vec<String>>().join(",");
-        let url = format!("https://dev.azure.com/{}/{}/_apis/wit/workitems?ids={}&api-version=7.0", organization, project, &ids_str);
-        let json_data = request_get(pat, &url).await?;
-        let value = json_data["value"].to_string();
-        let work_items: Vec<WorkItem> = serde_json::from_str(&value)?;
-        all_work_items.extend(work_items);
+        let request = get_work_items_details_one_request(organization, project, pat, ids);
+        tasks.push(request);
+    }
+
+    // 並列処理実行
+    let mut all_work_items: Vec<WorkItem> = Vec::new();
+    let results: Vec<_> = futures::future::join_all(tasks).await;
+
+    // 結果取り出し
+    for result in results {
+        match result {
+            Ok(r) => {
+                all_work_items.extend(r);
+            },
+            Err(err) => eprintln!("Task failed: {}", err),
+        }
     }
 
     Ok(all_work_items)
+}
+
+async fn get_work_items_details_one_request(organization: &str, project: &str, pat: &str, ids: Vec<i64>) -> Result<Vec<WorkItem>, Box<dyn Error>> {
+    let ids_str: String = ids.iter().map(|ids: &i64| ids.to_string()).collect::<Vec<String>>().join(",");
+    let url = format!("https://dev.azure.com/{}/{}/_apis/wit/workitems?ids={}&api-version=7.0", organization, project, &ids_str);
+    let json_data = request_get(pat, &url).await?;
+    let value = json_data["value"].to_string();
+    let work_items: Vec<WorkItem> = serde_json::from_str(&value)?;
+    Ok(work_items)
 }
 
 pub async fn get_work_item_revisions_json(organization: &str, project: &str, pat: &str, id: u64) -> Result<String, Box<dyn Error>> {
