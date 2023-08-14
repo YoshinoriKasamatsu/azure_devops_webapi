@@ -37,7 +37,12 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
         // リビジョンのJSONを保存を並列実行する
         let save_result = save_revisions_json(organization.as_str(), project.as_str(), pat.as_str(), item);
-        save_results.last_mut().unwrap().push(save_result);
+
+        if let Some(save_results2) = save_results.last_mut() {
+            save_results2.push(save_result);
+        }else{
+            panic!("save_results.last_mut() is None");
+        }
         if save_results.last().unwrap().len() == THREAD_COUNT {
             save_results.push(Vec::new());
         }
