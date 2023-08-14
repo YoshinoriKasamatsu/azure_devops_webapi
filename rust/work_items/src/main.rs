@@ -28,9 +28,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let pat = &args[3];
 
     let ids = work_items::get_work_items(organization, project, pat).await?;
-
     let work_items = work_items::get_work_items_details(organization, project, pat, ids).await?;
-
     // 結果の表示
     for item in &work_items {
         println!("{}\t{}\t{:?}\t{}\t{}\t{}", item.id, item.rev, item.fields.changed_date.unwrap(), item.fields.state, item.fields.work_item_type,  item.fields.title);
@@ -43,7 +41,6 @@ async fn main() -> Result<(), Box<dyn Error>> {
         let mut file = File::create(&filename)?;
         file.write_all(json_text.as_bytes())?;
     }
-
     Ok(())
 }
 

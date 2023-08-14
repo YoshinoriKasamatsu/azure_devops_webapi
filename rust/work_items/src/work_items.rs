@@ -99,12 +99,24 @@ pub async fn get_work_items(organization: &str, project: &str, pat: &str) -> Res
 }
 
 pub async fn get_work_items_details(organization: &str, project: &str, pat: &str, ids: Vec<i64>) -> Result<Vec<WorkItem>, Box<dyn Error>> {
-    let ids_str: String = ids.iter().map(|ids: &i64| ids.to_string()).collect::<Vec<String>>().join(",");
-    let url = format!("https://dev.azure.com/{}/{}/_apis/wit/workitems?ids={}&api-version=7.0", organization, project, &ids_str);
-    let json_data = request_get(pat, &url).await?;
-    let value = json_data["value"].to_string();
-    let work_items: Vec<WorkItem> = serde_json::from_str(&value)?;
-    Ok(work_items)
+
+    // idを200個ずつに分割
+    let mut ids_vec = Vec::new();
+    for chunk in ids.chunks(200) {
+        ids_vec.push(chunk.to_vec());
+    }
+
+    let mut all_work_items: Vec<WorkItem> = Vec::new();
+    for ids in ids_vec {
+        let ids_str: String = ids.iter().map(|ids: &i64| ids.to_string()).collect::<Vec<String>>().join(",");
+        let url = format!("https://dev.azure.com/{}/{}/_apis/wit/workitems?ids={}&api-version=7.0", organization, project, &ids_str);
+        let json_data = request_get(pat, &url).await?;
+        let value = json_data["value"].to_string();
+        let work_items: Vec<WorkItem> = serde_json::from_str(&value)?;
+        all_work_items.extend(work_items);
+    }
+
+    Ok(all_work_items)
 }
 
 pub async fn get_work_item_revisions_json(organization: &str, project: &str, pat: &str, id: u64) -> Result<String, Box<dyn Error>> {
